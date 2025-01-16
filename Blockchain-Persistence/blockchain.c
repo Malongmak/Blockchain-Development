@@ -72,7 +72,6 @@ int load_blockchain(Blockchain *chain, const char *filename) {
     
     while (fread(new_block, sizeof(Block), 1, file)) {
         if (previous_block != NULL) {
-
             if (strcmp(new_block->previous_hash, previous_block->hash) != 0) {
                 printf("Blockchain integrity compromised!\n");
                 fclose(file);
@@ -91,5 +90,38 @@ int load_blockchain(Blockchain *chain, const char *filename) {
     }
     
     fclose(file);
+    return 0;
+}
+
+int validate_blockchain(Blockchain *chain) {
+    Block *current = chain->head;
+    while (current != NULL && current->next != NULL) {
+        char previous_hash[64];
+        snprintf(previous_hash, sizeof(previous_hash), "%s", current->hash);
+        
+        Block *next_block = current->next;
+        if (strcmp(next_block->previous_hash, previous_hash) != 0) {
+            printf("Blockchain integrity compromised at block %d!\n", current->index + 1);
+            return -1;
+        }
+        
+        char input[512];
+        snprintf(input, sizeof(input), "%d%s%s%s", current->index, current->timestamp, current->data, current->previous_hash);
+        unsigned long hash = 0;
+        for (int i = 0; i < strlen(input); i++) {
+            hash = hash * 31 + input[i];
+        }
+        char computed_hash[64];
+        snprintf(computed_hash, sizeof(computed_hash), "%lx", hash);
+        
+        if (strcmp(current->hash, computed_hash) != 0) {
+            printf("Hash mismatch at block %d!\n", current->index);
+            return -1;
+        }
+
+        current = current->next;
+    }
+    
+    printf("Blockchain integrity validated successfully.\n");
     return 0;
 }

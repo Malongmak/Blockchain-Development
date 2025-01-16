@@ -2,23 +2,25 @@
 
 int main() {
     Blockchain *chain = create_blockchain();
+
+    Block *genesis_block = create_block(0, "Genesis Block", "0");
+    add_block(chain, genesis_block);
     
-    Block *block1 = create_block(1, "First Block", "0");
-    add_block(chain, block1);
+    Block *second_block = create_block(1, "Second Block", genesis_block->hash);
+    add_block(chain, second_block);
     
-    Block *block2 = create_block(2, "Second Block", block1->hash);
-    add_block(chain, block2);
-    
-    save_blockchain(chain, "blockchain.dat");
-    
-    Blockchain *loaded_chain = create_blockchain();
-    load_blockchain(loaded_chain, "blockchain.dat");
-    
-    Block *current = loaded_chain->head;
-    while (current != NULL) {
-        printf("Block %d: %s\n", current->index, current->data);
-        current = current->next;
+    if (save_blockchain(chain, "blockchain.dat") == 0) {
+        printf("Blockchain saved successfully.\n");
     }
-    
+
+    Blockchain *loaded_chain = create_blockchain();
+    if (load_blockchain(loaded_chain, "blockchain.dat") == 0) {
+        printf("Blockchain loaded successfully.\n");
+    }
+
+    if (validate_blockchain(loaded_chain) == 0) {
+        printf("Blockchain validation passed.\n");
+    }
+
     return 0;
 }
